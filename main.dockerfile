@@ -1,18 +1,19 @@
-# Use a lightweight Python base image
-FROM python:3.11-slim
+FROM alpine:3.17
 
-# Set working directory
+# Install necessary packages (if any)
+RUN apk add --no-cache shadow
+
+# Create group and user with specific UID/GID
+RUN groupadd -g 1001 appgroup \
+ && useradd -u 1001 -g appgroup -m -s /bin/sh appuser
+
+# Ensure ownership of working directory
 WORKDIR /app
+COPY . /app
+RUN chown -R appuser:appgroup /app
 
-# Copy and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Switch to non-root user
+USER appuser
 
-# Copy app source
-COPY . .
-
-# Expose the default Flask port
-EXPOSE 5000
-
-# Run the Flask app
-CMD ["python", "app.py"]
+# Default command
+CMD ["./start.sh"]
